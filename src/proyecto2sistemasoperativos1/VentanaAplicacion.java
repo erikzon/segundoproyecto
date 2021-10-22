@@ -5,6 +5,15 @@
  */
 package proyecto2sistemasoperativos1;
 
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
+import proyecto2sistemasoperativos1.proceso;
+
 /**
  *
  * @author Erick
@@ -18,6 +27,90 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         initComponents();
     }
 
+    public static int quantum = 1009;
+    public static int contadorPID = 1;
+    public static ArrayList<proceso> procesosArr = new ArrayList();
+    public static ArrayList<memoriaEstructura> memoriaArr = new ArrayList();
+
+    public void ActualizarTabla() {
+        DefaultTableModel model = (DefaultTableModel) jTableProcesos.getModel();
+        model.setRowCount(0);
+        for (int i = 0; i < procesosArr.size(); i++) {
+            model.addRow(new Object[]{
+                procesosArr.get(i).getNombre(),
+                procesosArr.get(i).getUID(),
+                procesosArr.get(i).getEstado(),
+                procesosArr.get(i).getMemoria()
+            });
+        }
+    }
+
+    public void ActualizarTablaMemoria() {
+        DefaultTableModel model = (DefaultTableModel) jTableMemoria.getModel();
+        model.setRowCount(0);
+        for (int i = 0; i < memoriaArr.size(); i++) {
+            model.addRow(new Object[]{
+                memoriaArr.get(i).getTamano(),
+                memoriaArr.get(i).getUso(),
+                memoriaArr.get(i).getDisponible(),
+                memoriaArr.get(i).getListaProcesosInternos()
+            });
+        }
+    }
+
+    void Asignar(proceso proceso) {
+        if (memoriaArr.size() < 1) {
+            memoriaEstructura aux = new memoriaEstructura();
+            aux.agregarProcesoAMemoria(proceso);
+            aux.setUID(proceso.getUID());
+            memoriaArr.add(aux);
+        } else {
+            memoriaArr.get(memoriaArr.size()-1).agregarProcesoAMemoria(proceso);
+        }
+        
+        ActualizarTablaMemoria();
+    }
+
+    void arrancarPlanificador() {
+        new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    //ASIGNAR SI EL TIMER INTERNO HA TERMINADO
+                    for (int i = 0; i < procesosArr.size(); i++) {
+                        if (procesosArr.get(i).getTimerInternoParaAsignarAMemoria() > 0) {
+                            procesosArr.get(i).disminuirTimer();
+                            if (procesosArr.get(i).getTimerInternoParaAsignarAMemoria() < 1) {
+                                procesosArr.get(i).setEstado("Asignado");
+                                Asignar(procesosArr.get(i));
+                                ActualizarTabla();
+                            }
+                        }
+                    }
+                    /*
+                    for (int i = 0; i < memoriaArr.size(); i++) {
+                        if (memoriaArr.get(i).getTimerterminarproceso() > 0) {
+                            memoriaArr.get(i).disminuirTimer();
+                            if (memoriaArr.get(i).getTimerterminarproceso() < 1) {
+                                //eliminar de memoriaArr y procesosArr
+                                for (int j = 0; j < procesosArr.size(); j++) {
+                                    if (memoriaArr.get(i).getUID() == procesosArr.get(j).getUID()) {
+                                        procesosArr.remove(j);
+                                    }
+                                }
+                                memoriaArr.remove(i);
+                                ActualizarTabla();
+                                ActualizarTablaMemoria();
+                            }
+                        }
+                    }*/
+                } catch (Exception e) {
+                    System.out.println("error en el planificador!");
+                }
+            }
+        }, 0, quantum / 3);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -27,6 +120,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
@@ -37,21 +131,38 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTableProcesos = new javax.swing.JTable();
         jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabelQuantum = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
-        jButtonCrear = new javax.swing.JButton();
+        jButtonAñadir = new javax.swing.JButton();
         jTextFieldMemoria = new javax.swing.JTextField();
-        jTextFieldNombre1 = new javax.swing.JTextField();
+        jTextFieldNombre = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
+        jPanel5 = new javax.swing.JPanel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabelQuantum = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(255, 153, 0));
         setName("SEGUNDO PROYECTO"); // NOI18N
         setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowOpened(java.awt.event.WindowEvent evt) {
+                formWindowOpened(evt);
+            }
+        });
 
         jLabel1.setText("SEGUNDO PROYECTO | SISTEMAS OPERATIVOS 1");
 
@@ -63,16 +174,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
 
         jTableMemoria.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null},
-                {"200000", "0", null, null}
+
             },
             new String [] {
                 "Memoria (KB)", "En uso (KB)", "Disponible (KB)", "Procesos"
@@ -90,7 +192,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(28, 28, 28)
-                .addComponent(jScrollPane2)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 976, Short.MAX_VALUE)
                 .addGap(23, 23, 23))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
@@ -100,9 +202,9 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(120, 120, 120))
         );
@@ -111,21 +213,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
 
         jTableProcesos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+
             },
             new String [] {
                 "Proceso", "PID", "Estado", "Memoria (KB)"
@@ -146,7 +234,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel4)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 433, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -154,19 +242,18 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel4)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(26, 26, 26))
         );
-
-        jLabel5.setText("Quantum:");
-
-        jLabelQuantum.setText("10001");
-
-        jLabel6.setText("ms");
 
         jPanel3.setBackground(new java.awt.Color(255, 204, 204));
 
-        jButtonCrear.setText("Añadir");
+        jButtonAñadir.setText("Añadir");
+        jButtonAñadir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonAñadirActionPerformed(evt);
+            }
+        });
 
         jTextFieldMemoria.setText("0");
         jTextFieldMemoria.addActionListener(new java.awt.event.ActionListener() {
@@ -199,11 +286,11 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel9)
                             .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jTextFieldNombre1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jTextFieldNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(27, 27, 27)
                                 .addComponent(jTextFieldMemoria, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(44, 44, 44)
-                        .addComponent(jButtonCrear)))
+                        .addComponent(jButtonAñadir)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
@@ -217,10 +304,42 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                     .addComponent(jLabel8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButtonCrear)
+                    .addComponent(jButtonAñadir)
                     .addComponent(jTextFieldMemoria, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextFieldNombre1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextFieldNombre, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
+        );
+
+        jPanel5.setBackground(new java.awt.Color(255, 255, 204));
+
+        jLabel5.setText("Quantum:");
+
+        jLabelQuantum.setText("10001");
+
+        jLabel6.setText("ms");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(59, 59, 59)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabelQuantum)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel6)
+                .addContainerGap(69, Short.MAX_VALUE))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabelQuantum)
+                    .addComponent(jLabel6))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -235,23 +354,15 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                                 .addGap(349, 349, 349)
                                 .addComponent(jLabel1))
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(291, 291, 291)
+                                .addGap(114, 114, 114)
+                                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel2)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(78, 78, 78)
-                                .addComponent(jLabel5)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabelQuantum)
-                                .addGap(18, 18, 18)
-                                .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(18, 18, 18)))
+                        .addContainerGap()
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
@@ -263,20 +374,17 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2)
-                .addGap(5, 5, 5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabelQuantum)
-                            .addComponent(jLabel6))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(5, 5, 5)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(15, 15, 15)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 269, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 269, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -286,6 +394,45 @@ public class VentanaAplicacion extends javax.swing.JFrame {
     private void jTextFieldMemoriaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldMemoriaActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextFieldMemoriaActionPerformed
+
+
+    private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
+        int min = 1000;
+        int max = 10000;
+
+        quantum = (int) Math.floor(Math.random() * (max - min + 1) + min);
+
+        jLabelQuantum.setText(Integer.toString(quantum));
+        ActualizarTabla();
+        arrancarPlanificador();
+    }//GEN-LAST:event_formWindowOpened
+
+    private void jButtonAñadirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAñadirActionPerformed
+        try {
+            if (Integer.parseInt(jTextFieldMemoria.getText()) > 400000 || Integer.parseInt(jTextFieldMemoria.getText()) < 1) {
+                JOptionPane.showMessageDialog(new JFrame(), "El proceso debe tener un tamaño mayor a 0kb y menor a 400,000kb");
+            } else if (jTextFieldNombre.getText().equals("")) {
+                JOptionPane.showMessageDialog(new JFrame(), "El proceso debe contener un nombre");
+            } else if (procesosArr.size() < 15) {
+                proceso aux = new proceso();
+                aux.setNombre(jTextFieldNombre.getText());
+                aux.setUID(contadorPID++);
+                aux.setEstado("en espera");
+                aux.setMemoria(Integer.parseInt(jTextFieldMemoria.getText()));
+                procesosArr.add(aux);
+                ActualizarTabla();
+                jTextFieldMemoria.setText("0");
+                jTextFieldNombre.setText("");
+            } else {
+                JOptionPane.showMessageDialog(new JFrame(), "No se pueden tener mas de 15 procesos, espere a que se libere un proceso para continuar");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(new JFrame(), "El proceso debe tener un tamaño mayor a 0kb y menor a 400,000kb");
+            jTextFieldMemoria.setText("0");
+        }
+
+
+    }//GEN-LAST:event_jButtonAñadirActionPerformed
 
     /**
      * @param args the command line arguments
@@ -323,7 +470,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButtonCrear;
+    private javax.swing.JButton jButtonAñadir;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -337,11 +484,13 @@ public class VentanaAplicacion extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTableMemoria;
     private javax.swing.JTable jTableProcesos;
     private javax.swing.JTextField jTextFieldMemoria;
-    private javax.swing.JTextField jTextFieldNombre1;
+    private javax.swing.JTextField jTextFieldNombre;
     // End of variables declaration//GEN-END:variables
 }
