@@ -10,7 +10,7 @@ package proyecto2sistemasoperativos1;
  * @author Erick
  */
 class proceso {
-        private String Nombre;
+    private String Nombre;
     private int UID;
     private String Estado;
     private int Memoria;
@@ -30,8 +30,18 @@ class proceso {
         
     proceso(){
         int min = 1;
-        int max = 4;
+        int max = 2;
         timerInternoParaAsignarAMemoria = (int) Math.floor(Math.random() * (max - min + 1) + min);
+    }
+    
+    public proceso copia(proceso otro){
+        proceso nuevoproceso = new proceso();
+        nuevoproceso.Nombre = otro.Nombre;
+        nuevoproceso.UID = otro.UID;
+        nuevoproceso.Estado = otro.Estado;
+        nuevoproceso.Memoria = otro.Memoria;
+        nuevoproceso.timerInternoParaAsignarAMemoria = otro.timerInternoParaAsignarAMemoria;
+        return nuevoproceso;
     }
 
     public String getNombre() {
@@ -39,7 +49,7 @@ class proceso {
     }
 
     public void setNombre(String Nombre) {
-        this.Nombre = Nombre+".exe";
+        this.Nombre = Nombre;
     }
 
     public int getUID() {

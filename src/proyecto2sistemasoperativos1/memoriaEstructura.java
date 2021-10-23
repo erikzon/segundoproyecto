@@ -6,6 +6,7 @@
 package proyecto2sistemasoperativos1;
 
 import java.util.ArrayList;
+import jdk.nashorn.internal.ir.CatchNode;
 
 /**
  *
@@ -24,7 +25,7 @@ public class memoriaEstructura {
     private int UID;
 
     //LOGICA DE PROCESOS INTERNOS
-    private ArrayList<proceso> procesosInternos = new ArrayList();
+    public ArrayList<proceso> procesosInternos = new ArrayList();
 
     public StringBuilder getListaProcesosInternos() {
         StringBuilder lista = new StringBuilder();
@@ -44,6 +45,18 @@ public class memoriaEstructura {
                 disponible = disponible + procesosInternos.get(i).getMemoria();
                 procesosInternos.remove(i);
             }
+        }
+    }
+
+    public void setearUltimaMemoria() {
+        this.procesosInternos.get(procesosInternos.size() - 1).setMemoria(200000);
+    }
+
+    public int obtenerUIDPrimerProceso() {
+        try {
+            return procesosInternos.get(0).getUID();
+        } catch (Exception e) {
+            return -1;
         }
     }
 

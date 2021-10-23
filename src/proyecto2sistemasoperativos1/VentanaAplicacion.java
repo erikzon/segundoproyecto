@@ -27,10 +27,19 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         initComponents();
     }
 
-    public static int quantum = 1009;
+    public static int quantum = 2009;
     public static int contadorPID = 1;
     public static ArrayList<proceso> procesosArr = new ArrayList();
     public static ArrayList<memoriaEstructura> memoriaArr = new ArrayList();
+    public static boolean semaforo = true;
+
+    public void cambiarSemaforo() {
+        semaforo = !semaforo;
+    }
+
+    public void negarSemaforo() {
+        semaforo = false;
+    }
 
     public void ActualizarTabla() {
         DefaultTableModel model = (DefaultTableModel) jTableProcesos.getModel();
@@ -59,15 +68,40 @@ public class VentanaAplicacion extends javax.swing.JFrame {
     }
 
     void Asignar(proceso proceso) {
-        if (memoriaArr.size() < 1) {
-            memoriaEstructura aux = new memoriaEstructura();
-            aux.agregarProcesoAMemoria(proceso);
-            aux.setUID(proceso.getUID());
-            memoriaArr.add(aux);
-        } else {
-            memoriaArr.get(memoriaArr.size()-1).agregarProcesoAMemoria(proceso);
+        try {
+            if (memoriaArr.size() < 1 && proceso.getMemoria() <= 200000) {
+                memoriaEstructura aux = new memoriaEstructura();
+                aux.agregarProcesoAMemoria(proceso);
+                aux.setUID(proceso.getUID());
+                memoriaArr.add(aux);
+            } else if (proceso.getMemoria() > 200000) {
+                proceso copiaproceso_uno = proceso.copia(proceso);
+                proceso copiaproceso_dos = proceso.copia(proceso);
+
+                copiaproceso_uno.setMemoria(copiaproceso_dos.getMemoria() - 200000);
+
+                memoriaEstructura aux = new memoriaEstructura();
+                aux.agregarProcesoAMemoria(copiaproceso_dos);
+                aux.setUID(copiaproceso_dos.getUID());
+                memoriaArr.add(aux);
+                memoriaArr.get(memoriaArr.size() - 1).setearUltimaMemoria();
+
+                memoriaEstructura aux2 = new memoriaEstructura();
+                aux2.agregarProcesoAMemoria(copiaproceso_uno);
+                aux2.setUID(copiaproceso_uno.getUID());
+                memoriaArr.add(aux2);
+
+            } else if (memoriaArr.get(memoriaArr.size() - 1).getDisponible() - proceso.getMemoria() > 0) {
+                memoriaArr.get(memoriaArr.size() - 1).agregarProcesoAMemoria(proceso);
+            } else {
+                memoriaEstructura aux = new memoriaEstructura();
+                aux.agregarProcesoAMemoria(proceso);
+                aux.setUID(proceso.getUID());
+                memoriaArr.add(aux);
+            }
+        } catch (Exception e) {
+            System.out.println("Error al asignar");
         }
-        
         ActualizarTablaMemoria();
     }
 
@@ -76,39 +110,69 @@ public class VentanaAplicacion extends javax.swing.JFrame {
             @Override
             public void run() {
                 try {
+                    //ActualizarTabla();
+                    //ActualizarTablaMemoria();
                     //ASIGNAR SI EL TIMER INTERNO HA TERMINADO
                     for (int i = 0; i < procesosArr.size(); i++) {
                         if (procesosArr.get(i).getTimerInternoParaAsignarAMemoria() > 0) {
                             procesosArr.get(i).disminuirTimer();
-                            if (procesosArr.get(i).getTimerInternoParaAsignarAMemoria() < 1) {
+                            if (procesosArr.get(i).getTimerInternoParaAsignarAMemoria() <= 0) {
                                 procesosArr.get(i).setEstado("Asignado");
+                                negarSemaforo();
                                 Asignar(procesosArr.get(i));
                                 ActualizarTabla();
                             }
                         }
                     }
-                    /*
-                    for (int i = 0; i < memoriaArr.size(); i++) {
-                        if (memoriaArr.get(i).getTimerterminarproceso() > 0) {
-                            memoriaArr.get(i).disminuirTimer();
-                            if (memoriaArr.get(i).getTimerterminarproceso() < 1) {
-                                //eliminar de memoriaArr y procesosArr
-                                for (int j = 0; j < procesosArr.size(); j++) {
-                                    if (memoriaArr.get(i).getUID() == procesosArr.get(j).getUID()) {
-                                        procesosArr.remove(j);
+
+                    if (semaforo) {
+                        if (memoriaArr.size() < 1) {
+                        } else {
+                            for (int i = 0; i < memoriaArr.size(); i++) {
+                                if (procesosArr.get(0).getEstado().equals("Asignado")) {
+                                    for (int j = 0; j < memoriaArr.get(i).procesosInternos.size(); j++) {
+                                        if (memoriaArr.get(i).procesosInternos.get(j).getUID() == procesosArr.get(0).getUID()) {
+                                            memoriaArr.get(i).procesosInternos.remove(j);
+                                        }
                                     }
+                                    //memoriaArr.get(i).procesosInternos.remove(memoriaArr.get(i).procesosInternos.indexOf(procesosArr.get(0).getUID()));//
+                                    if (memoriaArr.get(i).getDisponible() > 199999) { //
+                                        memoriaArr.remove(i);
+                                    }
+                                } else {
+                                    System.out.println("aun no estaba asignado el proceso " + procesosArr.get(0).getNombre());
                                 }
-                                memoriaArr.remove(i);
-                                ActualizarTabla();
-                                ActualizarTablaMemoria();
                             }
+                            for (int i = 0; i < memoriaArr.size(); i++) {
+                                if (procesosArr.get(0).getEstado().equals("Asignado")) {
+                                    for (int j = 0; j < memoriaArr.get(i).procesosInternos.size(); j++) {
+                                        if (memoriaArr.get(i).procesosInternos.get(j).getUID() == procesosArr.get(0).getUID()) {
+                                            memoriaArr.get(i).procesosInternos.remove(j);
+                                        }
+                                    }
+                                    //memoriaArr.get(i).procesosInternos.remove(memoriaArr.get(i).procesosInternos.indexOf(procesosArr.get(0).getUID()));//
+                                    if (memoriaArr.get(i).getDisponible() > 199999) { //
+                                        memoriaArr.remove(i);
+                                    }
+                                } else {
+                                    System.out.println("aun no estaba asignado el proceso " + procesosArr.get(0).getNombre());
+                                }
+                            }
+                            procesosArr.remove(0);
                         }
-                    }*/
+                    }
                 } catch (Exception e) {
                     System.out.println("error en el planificador!");
+                    System.out.println(e);
+                } finally {
+                    ActualizarTabla();
+                    ActualizarTablaMemoria();
+                    cambiarSemaforo();
                 }
+
             }
-        }, 0, quantum / 3);
+
+        }, 0, quantum);
     }
 
     /**
@@ -142,6 +206,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         jLabelQuantum = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -180,6 +245,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                 "Memoria (KB)", "En uso (KB)", "Disponible (KB)", "Procesos"
             }
         ));
+        jTableMemoria.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         jTableMemoria.setEnabled(false);
         jScrollPane2.setViewportView(jTableMemoria);
 
@@ -191,13 +257,14 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(28, 28, 28)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 976, Short.MAX_VALUE)
-                .addGap(23, 23, 23))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel3)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel3))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(28, 28, 28)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 638, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(27, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -318,18 +385,26 @@ public class VentanaAplicacion extends javax.swing.JFrame {
 
         jLabel6.setText("ms");
 
+        jLabel10.setFont(new java.awt.Font("Tahoma", 2, 11)); // NOI18N
+        jLabel10.setText("paciencia si el quantum es mayor a 5000ms :)");
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(59, 59, 59)
-                .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabelQuantum)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel6)
-                .addContainerGap(69, Short.MAX_VALUE))
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGap(59, 59, 59)
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabelQuantum)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel6))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(jLabel10)))
+                .addContainerGap(19, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -339,7 +414,9 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                     .addComponent(jLabel5)
                     .addComponent(jLabelQuantum)
                     .addComponent(jLabel6))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addComponent(jLabel10)
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -347,26 +424,24 @@ public class VentanaAplicacion extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(17, 17, 17))
+            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(349, 349, 349)
-                                .addComponent(jLabel1))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(114, 114, 114)
-                                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel2)))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(114, 114, 114)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(132, 132, 132)
+                        .addComponent(jLabel2))
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
+                        .addGap(477, 477, 477)
+                        .addComponent(jLabel1)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -374,7 +449,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addGap(5, 5, 5)
@@ -382,7 +457,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                         .addGap(15, 15, 15)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 269, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -415,7 +490,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(new JFrame(), "El proceso debe contener un nombre");
             } else if (procesosArr.size() < 15) {
                 proceso aux = new proceso();
-                aux.setNombre(jTextFieldNombre.getText());
+                aux.setNombre(jTextFieldNombre.getText() + ".exe");
                 aux.setUID(contadorPID++);
                 aux.setEstado("en espera");
                 aux.setMemoria(Integer.parseInt(jTextFieldMemoria.getText()));
@@ -472,6 +547,7 @@ public class VentanaAplicacion extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonAñadir;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
